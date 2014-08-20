@@ -1,4 +1,4 @@
-Upcaste.Configure is provided under the 3-clause BSD License:
+upcaste.configure is provided under the 3-clause BSD License:
 
 > Copyright (c) 2014 Jesse W. Towner
 >
