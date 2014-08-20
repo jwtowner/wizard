@@ -30,10 +30,21 @@
 
 (define-module upcaste.configure
   (use gauche.configure)
-  (export cf-check-prog-pkg-config))
+  (use gauche.process)
+  (use gauche.version)
+  (export cf-check-pkg-config))
 
 (select-module upcaste.configure)
 
-(define (cf-check-prog-pkg-config)
-  (cf-path-prog 'PROG "pkg-config"))
-
+;; API
+;; cf-check-pkg-config works like PKG_PROG_PKG_CONFIG
+(define (cf-check-pkg-config :optional (min-version "0.9.0"))
+  (cf-path-prog 'PKG_CONFIG "pkg-config")
+  (if (cf-have-subst? 'PKG_CONFIG)
+    (let ([proc (run-process `(,(cf-ref 'PKG_CONFIG) --version) :redirects '((>& 2 1) (> 1 out)))])
+      (let ([version (read-line (process-output proc 'out))])
+        (cf-msg-checking "pkg-config is at least version ~a " min-version)
+        (if (version<=? min-version version)
+          (cf-msg-result "yes")
+          (begin (cf-msg-result "no") (cf-subst 'PKG_CONFIG #f))))
+      (process-wait proc))))
