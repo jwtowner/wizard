@@ -1,5 +1,4 @@
 # (primal autoconf)
---------------------------------------------------------------
 #### *Automatic software source package configuration library*
 
 #### Overview
