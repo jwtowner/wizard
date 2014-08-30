@@ -5,9 +5,7 @@
 
 This is a library for Scheme (R7RS-small) that provides a portable and fully-functional alternative to GNU Autoconf for software source configuration.
 
-#### Supported Scheme Implementations
-
-The following Scheme implementations are known to work with Primal Autoconf:
+Primal Autoconf is known to work on the following Scheme implementations:
 
 - Chibi Scheme
 - Gauche Scheme
