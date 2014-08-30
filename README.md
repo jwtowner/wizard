@@ -1,10 +1,17 @@
-# (upcaste autoconf)
--------------------------- -----------------------------
-#### *Configuration module for Chibi Scheme*
+# (primal autoconf)
+--------------------------------------------------------------
+#### *Automatic software source package configuration library*
 
 #### Overview
 
-This is a simple module for Chibi Scheme that provides an autoconf-like language for configuring software projects.
+This is a library for Scheme (R7RS-small) that provides an alternative to GNU Autoconf for software source configuration.
+
+#### Supported Scheme Implementations
+
+The following Scheme implementations are known to work with Primal Autoconf:
+
+- Chibi Scheme
+- Gauche Scheme
 
 #### Status
 
