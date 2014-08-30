@@ -1,4 +1,4 @@
-upcaste.configure is provided under the 3-clause BSD License:
+Primal Autoconf is provided under the 3-clause BSD License:
 
 > Copyright (c) 2014 Jesse W. Towner
 >
