@@ -3,7 +3,7 @@
 
 #### Overview
 
-This is a library for Scheme (R7RS-small) that provides an alternative to GNU Autoconf for software source configuration.
+This is a library for Scheme (R7RS-small) that provides a portable and fully-functional alternative to GNU Autoconf for software source configuration.
 
 #### Supported Scheme Implementations
 
