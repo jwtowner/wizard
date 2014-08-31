@@ -34,6 +34,11 @@
 (define as-message-log-port (make-parameter #f))
 (define as-original-input-port (make-parameter (current-input-port)))
 
+(define as-exit
+  (case-lambda
+    (()    (exit))
+    ((obj) (exit obj))))
+
 (define (with-output-to-message-port thunk)
   (let ((port (as-message-port)))
     (if (output-port? port)
@@ -51,10 +56,27 @@
 (define (as-echo . args)
   (apply as-echo-n `(,@args "\n")))
 
-(define as-exit
-  (case-lambda
-    (()    (exit))
-    ((obj) (exit obj))))
+(define (ac-msg-checking . args)
+  (apply as-echo-n `("[ Configure ] checking " ,@args " ... ")))
+
+(define (ac-msg-result . args)
+  (apply as-echo args))
+
+(define (ac-msg-notice . args)
+  (apply as-echo `("[ Configure ] " ,@args)))
+
+(define (ac-msg-brotip . args)
+  (apply as-echo `("[  Bro-Tip  ] " ,@args)))
+
+(define (ac-msg-warn . args)
+  (apply as-echo `("[  Warning  ] " ,@args)))
+
+(define (ac-msg-error . args)
+  (apply as-echo `("[   Error   ] " ,@args))
+  (as-exit -1))
+
+(define (ac-msg-failure . args)
+  (apply ac-msg-error `(,@args "\n[  Bro-Tip  ] See `config.log' for more details...")))
 
 (define (version-compare version-a version-b)
   (define (make-next-version-part s)

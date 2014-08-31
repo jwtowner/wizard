@@ -30,154 +30,143 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-;;
-;; version and prerequisite
-;;
-
 (define (ac-version) "0.1")
 
 (define (ac-prereq version)
   (when (as-version<? (ac-version) version)
-    (ac-msg-error "Primal Autoconf version " version " or higher is required")))
+    (ac-msg-error "Primal Autoconf version " version " or higher is required!")))
 
-;;
-;; messages
-;;
+(define arg-option-processors '())
+(define arg-feature-processors '())
+(define arg-package-processors '())
+(define arg-configuration-help '())
+(define arg-base-output-help '())
+(define arg-sub-output-help '())
+(define arg-environment-help '())
 
-(define (ac-msg-checking . args)
-  (apply as-echo-n `("[ Configure ]\tchecking " ,@args " ... ")))
-
-(define (ac-msg-result . args)
-  (apply as-echo args))
-
-(define (ac-msg-notice . args)
-  (apply as-echo `("[ Configure ]\t" ,@args)))
-
-(define (ac-msg-warn . args)
-  (apply as-echo `("[  Warning  ]\t" ,@args)))
-
-(define (ac-msg-error . args)
-  (apply as-echo `("[   Error   ]\t" ,@args))
-  (as-exit -1))
-
-(define (ac-msg-failure . args)
-  (apply ac-msg-error `(,@args "\n[   Error   ]\tSee `config.log' for more details...")))
-
-;;
-;; configuration package
-;;
-
-(define-record-type <package>
-  (make-package defs substs features packages)
-  package?
-  (defs package-definitions)
-  (substs package-substitutions)
-  (features package-features)
-  (packages package-packages))
-
-(define current-package
-  (let ((package #f))
-    (case-lambda
-      (()      (or package (error "ac-init was not called to initialize package")))
-      ((value) (set! package value)))))
-
-(define ac-define
+(define ac-arg-enable
   (case-lambda
-    ((symbol)
-     (ac-define symbol 1))
-    ((symbol value)
-     (hash-table-set! (package-definitions (current-package)) symbol value))))
-
-(define ac-define-ref
-  (case-lambda
-    ((definition)
-     (hash-table-ref (package-definitions (current-package)) definition))
-    ((definition default)
-     (hash-table-ref/default (package-definitions (current-package)) definition default))))
-
-(define (ac-define-exists? definition)
-   (hash-table-exists? (package-definitions (current-package)) definition))
-
-(define (ac-subst symbol value)
-  (hash-table-set! (package-substitutions (current-package)) symbol value))
-
-(define ac-subst-ref
-  (case-lambda
-    ((symbol)
-     (hash-table-ref (package-substitutions (current-package)) symbol))
-    ((symbol default)
-     (hash-table-ref/default (package-substitutions (current-package)) symbol default))))
-
-(define (ac-subst-exists? symbol)
-  (hash-table-exists? (package-substitutions (current-package)) symbol))
-
-(define ac-feature
-  (case-lambda
-    ((feature)
-     (ac-define feature "yes"))
-    ((feature value)
-     (hash-table-set! (package-features (current-package)) feature value))))
-
-(define ac-feature-ref
-  (case-lambda
-    ((feature)
-     (hash-table-ref (package-features (current-package)) feature))
-    ((feature default)
-     (hash-table-ref/default (package-features (current-package)) feature))))
-
-(define (ac-feature-exists? feature)
-  (hash-table-exists? (package-features (current-package)) feature))
-
-(define ac-package
-  (case-lambda
-    ((package)
-     (ac-define package "yes"))
-    ((package value)
-     (hash-table-set! (package-packages (current-package)) package value))))
-
-(define ac-package-ref
-  (case-lambda
-    ((package)
-     (hash-table-ref (package-packages (current-package)) package))
-    ((package default)
-     (hash-table-ref/default (package-packages (current-package)) package))))
-
-(define (ac-package-exists? package)
-  (hash-table-exists? (package-packages (current-package)) package))
-
-;;
-;; initialization and command line parsing
-;;
-
-(define feature-processors '())
-(define package-processors '())
-
-(define ac-arg-feature
-  (case-lambda
-    ((feature help-string) (ac-arg-feature feature help-string (lambda (v) #f) (lambda () #f)))
-    ((feature help-string action-if-given) (ac-arg-feature feature help-string action-if-given (lambda () #f)))
+    ((feature help-string)
+     (ac-arg-enable feature help-string (lambda (v) #f) (lambda () #f)))
+    ((feature help-string action-if-given)
+     (ac-arg-enable feature help-string action-if-given (lambda () #f)))
     ((feature help-string action-if-given action-if-not-given)
-     (set! feature-processors (cons (list feature help-string action-if-given action-if-not-given) feature-processors)))))
+     (set!
+       arg-feature-processors
+       (cons
+         (list feature help-string action-if-given action-if-not-given)
+         arg-feature-processors)))))
 
 (define ac-arg-with
   (case-lambda
-    ((package help-string) (ac-arg-with package help-string (lambda (v) #f) (lambda () #f)))
-    ((package help-string action-if-given) (ac-arg-with package help-string action-if-given (lambda () #f)))
+    ((package help-string)
+     (ac-arg-with package help-string (lambda (v) #f) (lambda () #f)))
+    ((package help-string action-if-given)
+     (ac-arg-with package help-string action-if-given (lambda () #f)))
     ((package help-string action-if-given action-if-not-given)
-     (set! package-processors (cons (list package help-string action-if-given action-if-not-given) package-processors)))))
+     (set!
+       arg-package-processors
+       (cons 
+         (list package help-string action-if-given action-if-not-given)
+         arg-package-processors)))))
+
+(define (ac-arg-var name help-string)
+  (set! arg-environment-help (cons (cons name help-string) arg-environment-help)))
+
+(define (arg-option-processor option name arg features packages options variables)
+  (hash-table-set! options (string->symbol (car (option-names option))) arg)
+  (values features packages options variables))
+
+(define (arg-register-option name options required-arg? optional-arg? help-details)
+  (set!
+    arg-option-processors
+    (cons
+      (option options required-arg? optional-arg? arg-option-processor)
+       arg-option-processors))
+  (cons name help-details))
+
+(define (arg-io-variable-processor option name arg features packages options variables)
+  (hash-table-set! variables (string->symbol name) arg)
+  (values features packages options variables))
+
+(define (arg-register-io-variable name default help-arg-name help-details)
+  (set!
+    arg-option-processors
+    (cons
+      (option `(,(symbol->string name)) #t #f arg-io-variable-processor)
+      arg-option-processors))
+  (cons name help-details))
+
+(define (arg-register-options)
+  (define-syntax register-options
+    (syntax-rules ()
+      ((_ (help-alist register-proc) options ...)
+       (for-each
+         (lambda (a)
+           (set! help-alist (cons (apply register-proc a) help-alist)))
+         `(,options ...)))))
+  (register-options (arg-configuration-help arg-register-option)
+    '(help             '(#\h "help") #f #t             "display this help and exit")
+    '(version          '(#\V "version") #f #t          "display version information and exit")
+    '(quiet            '(#\q "quiet" "silent") #f #t   "do not print `[ Configure ]' messages")
+    '(no-create        '("no-create") #f #f            "do not create output files")
+    '(no-colors        '("no-colors") #f #f            "disable colored output to terminal")
+    '(config-cache     '("config-cache") #f #f         "alias for `--cache-file=config.cache'"))
+  (register-options (arg-configuration-help arg-register-io-variable)
+    '(cache-file       #f                       "FILE" "cache test results in FILE")
+    '(srcdir           #f                        "DIR" "find the sources in DIR [configure dir or `..']"))
+  (register-options (arg-base-output-help arg-register-io-variable)
+    '(prefix          "/usr/local"            "PREFIX" "install architecture-independent files in PREFIX")
+    '(exec-prefix     "${prefix}"            "EPREFIX" "install architecture-dependent files in EPREFIX"))
+  (register-options (arg-sub-output-help arg-register-io-variable)
+    '(bindir          "${eprefix}/bin"           "DIR" "user executables")
+    '(sbindir         "${eprefix}/sbin"          "DIR" "system admin executables")
+    '(libexecdir      "${eprefix}/libexec"       "DIR" "program executables")
+    '(sysconfdir      "${prefix}/etc"            "DIR" "read-only single-machine data")
+    '(sharedstatedir  "${prefix}/com"            "DIR" "modifiable architecture-independent data")
+    '(localstatedir   "${prefix}/var"            "DIR" "modifiable single-machine data")
+    '(libdir          "${prefix}/lib"            "DIR" "object code libraries")
+    '(includedir      "${prefix}/include"        "DIR" "source header files")
+    '(datarootdir     "${prefix}/share"          "DIR" "read-only arch.-independent data root")
+    '(datadir         "${datarootdir}"           "DIR" "read-only architecture-independent data")
+    '(infodir         "${datarootdir}/info"      "DIR" "info documentation")
+    '(localedir       "${datarootdir}/locale"    "DIR" "locale-dependent data")
+    '(mandir          "${datarootdir}/man"       "DIR" "man documentation")
+    '(docdir          "${datarootdir}/doc"       "DIR" "documentation root")
+    '(htmldir         "${docdir}"                "DIR" "html documentation")
+    '(dvidir          "${docdir}"                "DIR" "dvi documentation")
+    '(pdfdir          "${docdir}"                "DIR" "pdf documentation")
+    '(psdir           "${docdir}"                "DIR" "ps documentation [DOCDIR]")))
 
 (define ac-init
   (case-lambda
-    ((package version) (ac-init package version "" "" ""))
-    ((package version bug-report) (ac-init package version bug-report "" ""))
-    ((package version bug-report tarname) (ac-init package version bug-report tarname ""))
+    ((package version)
+     (ac-init package version "" "" ""))
+    ((package version bug-report)
+     (ac-init package version bug-report "" ""))
+    ((package version bug-report tarname)
+     (ac-init package version bug-report tarname ""))
     ((package version bug-report tarname url)
-     (when (output-port? (as-message-log-port)) (close-output-port (as-message-log-port)))
-     (as-message-log-port (open-output-file "config.log"))
-     (current-package (make-package (make-hash-table) (make-hash-table) (make-hash-table) (make-hash-table)))
-     (ac-subst 'PACKAGE_NAME package)
-     (ac-subst 'PACKAGE_VERSION version)
-     )))
+     (call-with-values
+       (lambda ()
+         (args-fold
+           (command-line)
+           arg-option-processors
+           (lambda (option name arg seed)
+             (ac-msg-error "Unrecognized option: " option name arg))
+           (lambda (variable features packages options variables)
+             (hash-table-set! variables variable #t)
+             (values features packages options variables))
+           (make-hash-table)         ; features table
+           (make-hash-table)         ; packages table
+           (make-hash-table)         ; options table
+           (make-hash-table)))       ; variables table
+         (lambda (features packages options variables)
+           (when (output-port? (as-message-log-port)) (close-output-port (as-message-log-port)))
+           (as-message-log-port (open-output-file "config.log"))
+           (current-package (make-package features packages options variables))
+           (ac-subst 'PACKAGE_NAME package)
+           (ac-subst 'PACKAGE_VERSION version))))))
 
 #|;;> cf-check-pkg-config works like PKG_PROG_PKG_CONFIG
 (define (cf-check-pkg-config :optional (min-version "0.9.0"))

@@ -1,7 +1,8 @@
 (define-library (primal autoconf)
-  (export ac-version ac-prereq ac-init
+  (export ac-version ac-prereq ac-arg-enable ac-arg-with ac-arg-var ac-init
           ac-msg-checking ac-msg-result ac-msg-notice ac-msg-warn ac-msg-error ac-msg-failure
-          ac-define ac-define-exists? ac-define-ref
+          ac-feature ac-feature-exists? ac-feature-ref
+          ac-package ac-package-exists? ac-package-ref
           ac-subst ac-subst-exists? ac-subst-ref
           as-echo as-echo-n as-exit as-message-port as-message-log-port
           as-original-input-port as-version-compare as-version=? as-version<?
@@ -14,4 +15,7 @@
           (srfi 37)
           (srfi 69))
   (include "autoconf/common.scm")
-  (include "autoconf.scm"))
+  (include "autoconf/package.scm")
+  (include "autoconf.scm")
+  (begin
+    (arg-register-options)))
