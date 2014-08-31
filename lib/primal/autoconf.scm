@@ -36,7 +36,7 @@
   (when (as-version<? (ac-version) version)
     (ac-msg-error "Primal Autoconf version " version " or higher is required!")))
 
-(define arg-option-processors '())
+(define arg-option-processors (list))
 (define arg-feature-processors '())
 (define arg-package-processors '())
 (define arg-configuration-help '())
@@ -73,17 +73,16 @@
 (define (ac-arg-var name help-string)
   (set! arg-environment-help (cons (cons name help-string) arg-environment-help)))
 
-(define (arg-option-processor option name arg features packages options variables)
-  (hash-table-set! options (string->symbol (car (option-names option))) arg)
-  (values features packages options variables))
-
-(define (arg-register-option name options required-arg? optional-arg? help-details)
+(define (arg-register-option canonical-name option-names required-arg? optional-arg? help-details)
   (set!
     arg-option-processors
     (cons
-      (option options required-arg? optional-arg? arg-option-processor)
-       arg-option-processors))
-  (cons name help-details))
+      (option option-names required-arg? optional-arg? 
+             (lambda (option name arg features packages options variables)
+               (hash-table-set! options canonical-name (or arg #t))
+               (values features packages options variables)))
+      arg-option-processors))
+  (cons canonical-name help-details))
 
 (define (arg-io-variable-processor option name arg features packages options variables)
   (hash-table-set! variables (string->symbol name) arg)
@@ -98,45 +97,55 @@
   (cons name help-details))
 
 (define (arg-register-options)
-  (define-syntax register-options
-    (syntax-rules ()
-      ((_ (help-alist register-proc) options ...)
-       (for-each
-         (lambda (a)
-           (set! help-alist (cons (apply register-proc a) help-alist)))
-         `(,options ...)))))
-  (register-options (arg-configuration-help arg-register-option)
-    '(help             '(#\h "help") #f #t             "display this help and exit")
-    '(version          '(#\V "version") #f #t          "display version information and exit")
-    '(quiet            '(#\q "quiet" "silent") #f #t   "do not print `[ Configure ]' messages")
-    '(no-create        '("no-create") #f #f            "do not create output files")
-    '(no-colors        '("no-colors") #f #f            "disable colored output to terminal")
-    '(config-cache     '("config-cache") #f #f         "alias for `--cache-file=config.cache'"))
-  (register-options (arg-configuration-help arg-register-io-variable)
-    '(cache-file       #f                       "FILE" "cache test results in FILE")
-    '(srcdir           #f                        "DIR" "find the sources in DIR [configure dir or `..']"))
-  (register-options (arg-base-output-help arg-register-io-variable)
-    '(prefix          "/usr/local"            "PREFIX" "install architecture-independent files in PREFIX")
-    '(exec-prefix     "${prefix}"            "EPREFIX" "install architecture-dependent files in EPREFIX"))
-  (register-options (arg-sub-output-help arg-register-io-variable)
-    '(bindir          "${eprefix}/bin"           "DIR" "user executables")
-    '(sbindir         "${eprefix}/sbin"          "DIR" "system admin executables")
-    '(libexecdir      "${eprefix}/libexec"       "DIR" "program executables")
-    '(sysconfdir      "${prefix}/etc"            "DIR" "read-only single-machine data")
-    '(sharedstatedir  "${prefix}/com"            "DIR" "modifiable architecture-independent data")
-    '(localstatedir   "${prefix}/var"            "DIR" "modifiable single-machine data")
-    '(libdir          "${prefix}/lib"            "DIR" "object code libraries")
-    '(includedir      "${prefix}/include"        "DIR" "source header files")
-    '(datarootdir     "${prefix}/share"          "DIR" "read-only arch.-independent data root")
-    '(datadir         "${datarootdir}"           "DIR" "read-only architecture-independent data")
-    '(infodir         "${datarootdir}/info"      "DIR" "info documentation")
-    '(localedir       "${datarootdir}/locale"    "DIR" "locale-dependent data")
-    '(mandir          "${datarootdir}/man"       "DIR" "man documentation")
-    '(docdir          "${datarootdir}/doc"       "DIR" "documentation root")
-    '(htmldir         "${docdir}"                "DIR" "html documentation")
-    '(dvidir          "${docdir}"                "DIR" "dvi documentation")
-    '(pdfdir          "${docdir}"                "DIR" "pdf documentation")
-    '(psdir           "${docdir}"                "DIR" "ps documentation [DOCDIR]")))
+  (let-syntax ((register-options (syntax-rules()
+                                   ((_ (help-alist register-proc) options ...)
+                                    (for-each
+                                      (lambda (a)
+                                        (set! help-alist (cons (apply register-proc a) help-alist)))
+                                      `(,options ...))))))
+    (register-options (arg-configuration-help arg-register-option)
+      '(help             (#\h "help") #f #t             "display this help and exit")
+      '(version          (#\V "version") #f #t          "display version information and exit")
+      '(quiet            (#\q "quiet" "silent") #f #t   "do not print `[ Configure ]' messages")
+      '(no-create        (#\n "no-create") #f #f        "do not create output files")
+      '(no-colors        ("no-colors") #f #f            "disable colored output to terminal")
+      '(config-cache     (#\C "config-cache") #f #f     "alias for `--cache-file=config.cache'"))
+    (register-options (arg-configuration-help arg-register-io-variable)
+      '(cache-file       #f                       "FILE" "cache test results in FILE")
+      '(srcdir           #f                        "DIR" "find the sources in DIR [configure dir or `..']"))
+    (register-options (arg-base-output-help arg-register-io-variable)
+      '(prefix          "/usr/local"            "PREFIX" "install architecture-independent files in PREFIX")
+      '(exec-prefix     "${prefix}"            "EPREFIX" "install architecture-dependent files in EPREFIX"))
+    (register-options (arg-sub-output-help arg-register-io-variable)
+      '(bindir          "${eprefix}/bin"           "DIR" "user executables")
+      '(sbindir         "${eprefix}/sbin"          "DIR" "system admin executables")
+      '(libexecdir      "${eprefix}/libexec"       "DIR" "program executables")
+      '(sysconfdir      "${prefix}/etc"            "DIR" "read-only single-machine data")
+      '(sharedstatedir  "${prefix}/com"            "DIR" "modifiable architecture-independent data")
+      '(localstatedir   "${prefix}/var"            "DIR" "modifiable single-machine data")
+      '(libdir          "${prefix}/lib"            "DIR" "object code libraries")
+      '(includedir      "${prefix}/include"        "DIR" "source header files")
+      '(atarootdir     "${prefix}/share"          "DIR" "read-only arch.-independent data root")
+      '(datadir         "${datarootdir}"           "DIR" "read-only architecture-independent data")
+      '(infodir         "${datarootdir}/info"      "DIR" "info documentation")
+      '(localedir       "${datarootdir}/locale"    "DIR" "locale-dependent data")
+      '(mandir          "${datarootdir}/man"       "DIR" "man documentation")
+      '(docdir          "${datarootdir}/doc"       "DIR" "documentation root")
+      '(htmldir         "${docdir}"                "DIR" "html documentation")
+      '(dvidir          "${docdir}"                "DIR" "dvi documentation")
+      '(pdfdir          "${docdir}"                "DIR" "pdf documentation")
+      '(psdir           "${docdir}"                "DIR" "ps documentation [DOCDIR]"))))
+
+(define (ac-print-usage-and-exit)
+  (let-syntax
+    ((print (syntax-rules ()
+      ((_ lines ...)
+       (for-each display `(,lines ...))))))
+    (print
+      "Synopsis: Primal Autoconf Software Source Configuration Tool\n"
+      "Usage:    ./" (car (command-line)) " [options] [variables]\n\n"
+      "Configuration Options:\n"))
+  (as-exit 0))
 
 (define ac-init
   (case-lambda
@@ -150,10 +159,10 @@
      (call-with-values
        (lambda ()
          (args-fold
-           (command-line)
-           arg-option-processors
-           (lambda (option name arg seed)
-             (ac-msg-error "Unrecognized option: " option name arg))
+           (cdr (command-line))
+           (reverse arg-option-processors)
+           (lambda (option name arg features packages options variables)
+             (ac-msg-error "Unrecognized option: " name))
            (lambda (variable features packages options variables)
              (hash-table-set! variables variable #t)
              (values features packages options variables))
@@ -161,12 +170,14 @@
            (make-hash-table)         ; packages table
            (make-hash-table)         ; options table
            (make-hash-table)))       ; variables table
-         (lambda (features packages options variables)
-           (when (output-port? (as-message-log-port)) (close-output-port (as-message-log-port)))
-           (as-message-log-port (open-output-file "config.log"))
-           (current-package (make-package features packages options variables))
-           (ac-subst 'PACKAGE_NAME package)
-           (ac-subst 'PACKAGE_VERSION version))))))
+       (lambda (features packages options variables)
+         (current-package (make-package features packages options variables))))
+     (when (output-port? (as-message-log-port)) (close-output-port (as-message-log-port)))
+     (as-message-log-port (open-output-file "config.log"))
+     (when (hash-table-ref/default (package-options (current-package)) 'help #f)
+       (ac-print-usage-and-exit))
+     (ac-subst 'PACKAGE_NAME package)
+     (ac-subst 'PACKAGE_VERSION version))))
 
 #|;;> cf-check-pkg-config works like PKG_PROG_PKG_CONFIG
 (define (cf-check-pkg-config :optional (min-version "0.9.0"))
