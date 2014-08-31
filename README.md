@@ -7,8 +7,8 @@ This is a library for Scheme (R7RS-small) that provides a portable and fully-fun
 
 Primal Autoconf is known to work on the following Scheme implementations:
 
+- Chicken Scheme
 - Chibi Scheme
-- Gauche Scheme
 
 #### Status
 
