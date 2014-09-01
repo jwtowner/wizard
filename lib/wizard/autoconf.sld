@@ -4,23 +4,23 @@
           ac-feature ac-feature-exists? ac-feature-ref
           ac-package ac-package-exists? ac-package-ref
           ac-subst ac-subst-exists? ac-subst-ref
-          as-echo as-echo-n as-exit as-message-port as-message-log-port
-          as-original-input-port as-version-compare as-version=? as-version<?
-          as-version>? as-version<=? as-version>=?)
+          ac-exit ac-message-port ac-message-log-port ac-original-input-port
+          as-echo as-echo-n
+          ac-version-compare ac-version=? ac-version<? ac-version>?
+          ac-version<=? ac-version>=?)
   (import (scheme base)
           (scheme case-lambda)
           (scheme file)
-          (scheme process-context)
           (scheme write)
+          (except (scheme process-context) exit)
           (srfi 37)
-          (srfi 69))
-  (cond-expand
-    ((library (ncurses))
-     (import (ncurses))
-     (initscr)))
-  (include "autoconf/common.scm")
+          (srfi 69)
+          (rename (wizard base) (init wizard:init))
+          (prefix (except (wizard base) init) ac-))
+  (include "autoconf/message.scm")
   (include "autoconf/package.scm")
   (include "autoconf.scm")
   (begin
+    (wizard:init)
     (arg-register-options)))
 

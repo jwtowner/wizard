@@ -33,10 +33,10 @@
 (define (ac-version) "0.1")
 
 (define (ac-prereq version)
-  (when (as-version<? (ac-version) version)
+  (when (ac-version<? (ac-version) version)
     (ac-msg-error "Primal Autoconf version " version " or higher is required!")))
 
-(define arg-option-processors (list))
+(define arg-option-processors '())
 (define arg-feature-processors '())
 (define arg-package-processors '())
 (define arg-configuration-help '())
@@ -144,7 +144,7 @@
       "Synopsis: Wizard -- Software Source Package Configuration\n"
       "Usage:    ./" (car (command-line)) " [options] [variables]\n\n"
       "Configuration Options:\n")
-    (as-exit 0)))
+    (ac-exit)))
 
 (define ac-init
   (case-lambda
@@ -171,15 +171,15 @@
            (make-hash-table)))
        (lambda (features packages options variables)
          (current-package (make-package features packages options variables))))
-     (when (output-port? (as-message-log-port)) (close-output-port (as-message-log-port)))
-     (as-message-log-port (open-output-file "config.log"))
+     (when (output-port? (ac-message-log-port)) (close-output-port (ac-message-log-port)))
+     (ac-message-log-port (open-output-file "config.log"))
      (when (hash-table-ref/default (package-options (current-package)) 'help #f)
        (print-usage-and-exit))
      (ac-subst 'PACKAGE_NAME package)
      (ac-subst 'PACKAGE_VERSION version))))
 
 (define (ac-output . files)
-  (as-exit))
+  (ac-exit))
 
 #|;;> cf-check-pkg-config works like PKG_PROG_PKG_CONFIG
 (define (cf-check-pkg-config :optional (min-version "0.9.0"))
