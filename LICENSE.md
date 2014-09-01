@@ -1,4 +1,4 @@
-Primal Autoconf is provided under the 3-clause BSD License:
+Wizard is provided under the 3-clause BSD License:
 
 > Copyright (C) 2014 Jesse W. Towner
 >

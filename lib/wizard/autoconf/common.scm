@@ -1,5 +1,5 @@
 ;;
-;; Primal Autoconf
+;; Wizard - Automatic software source package configuration
 ;; Copyright (C) 2014 Jesse W. Towner
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 ;; LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 ;; A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 ;; OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-;; SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+;; SPECIAL,i EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
 ;; TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
 ;; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 ;; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
@@ -30,14 +30,19 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
+(define as-exit
+  (case-lambda
+    (()
+     (as-exit 0))
+    ((obj)
+     (cond-expand
+        ((library (ncurses))
+           (endwin)))
+     (exit obj))))
+
 (define as-message-port (make-parameter #f))
 (define as-message-log-port (make-parameter #f))
 (define as-original-input-port (make-parameter (current-input-port)))
-
-(define as-exit
-  (case-lambda
-    (()    (exit))
-    ((obj) (exit obj))))
 
 (define (with-output-to-message-port thunk)
   (let ((port (as-message-port)))
@@ -65,8 +70,8 @@
 (define (ac-msg-notice . args)
   (apply as-echo `("[ Configure ] " ,@args)))
 
-(define (ac-msg-brotip . args)
-  (apply as-echo `("[  Bro-Tip  ] " ,@args)))
+(define (ac-msg-wiztip . args)
+  (apply as-echo `("[  Wiz-Tip  ] " ,@args)))
 
 (define (ac-msg-warn . args)
   (apply as-echo `("[  Warning  ] " ,@args)))

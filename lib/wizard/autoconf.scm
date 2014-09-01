@@ -1,5 +1,5 @@
 ;;
-;; Primal Autoconf
+;; Wizard - Automatic software source package configuration
 ;; Copyright (C) 2014 Jesse W. Towner
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -97,26 +97,26 @@
   (cons name help-details))
 
 (define (arg-register-options)
-  (let-syntax ((register-options (syntax-rules()
-                                   ((_ (help-alist register-proc) options ...)
-                                    (for-each
-                                      (lambda (a)
-                                        (set! help-alist (cons (apply register-proc a) help-alist)))
-                                      `(,options ...))))))
-    (register-options (arg-configuration-help arg-register-option)
+  (let-syntax ((register (syntax-rules()
+                           ((_ (proc alist) options ...)
+                            (for-each
+                              (lambda (a)
+                                (set! alist (cons (apply proc a) alist)))
+                              `(,options ...))))))
+    (register (arg-register-option arg-configuration-help)
       '(help             (#\h "help") #f #t             "display this help and exit")
       '(version          (#\V "version") #f #t          "display version information and exit")
       '(quiet            (#\q "quiet" "silent") #f #t   "do not print `[ Configure ]' messages")
       '(no-create        (#\n "no-create") #f #f        "do not create output files")
       '(no-colors        ("no-colors") #f #f            "disable colored output to terminal")
       '(config-cache     (#\C "config-cache") #f #f     "alias for `--cache-file=config.cache'"))
-    (register-options (arg-configuration-help arg-register-io-variable)
+    (register (arg-register-io-variable arg-configuration-help)
       '(cache-file       #f                       "FILE" "cache test results in FILE")
       '(srcdir           #f                        "DIR" "find the sources in DIR [configure dir or `..']"))
-    (register-options (arg-base-output-help arg-register-io-variable)
+    (register (arg-register-io-variable arg-base-output-help)
       '(prefix          "/usr/local"            "PREFIX" "install architecture-independent files in PREFIX")
       '(exec-prefix     "${prefix}"            "EPREFIX" "install architecture-dependent files in EPREFIX"))
-    (register-options (arg-sub-output-help arg-register-io-variable)
+    (register (arg-register-io-variable arg-sub-output-help)
       '(bindir          "${eprefix}/bin"           "DIR" "user executables")
       '(sbindir         "${eprefix}/sbin"          "DIR" "system admin executables")
       '(libexecdir      "${eprefix}/libexec"       "DIR" "program executables")
@@ -125,7 +125,7 @@
       '(localstatedir   "${prefix}/var"            "DIR" "modifiable single-machine data")
       '(libdir          "${prefix}/lib"            "DIR" "object code libraries")
       '(includedir      "${prefix}/include"        "DIR" "source header files")
-      '(atarootdir     "${prefix}/share"          "DIR" "read-only arch.-independent data root")
+      '(datarootdir     "${prefix}/share"          "DIR" "read-only arch.-independent data root")
       '(datadir         "${datarootdir}"           "DIR" "read-only architecture-independent data")
       '(infodir         "${datarootdir}/info"      "DIR" "info documentation")
       '(localedir       "${datarootdir}/locale"    "DIR" "locale-dependent data")
@@ -136,16 +136,15 @@
       '(pdfdir          "${docdir}"                "DIR" "pdf documentation")
       '(psdir           "${docdir}"                "DIR" "ps documentation [DOCDIR]"))))
 
-(define (ac-print-usage-and-exit)
-  (let-syntax
-    ((print (syntax-rules ()
-      ((_ lines ...)
-       (for-each display `(,lines ...))))))
+(define (print-usage-and-exit)
+  (letrec-syntax ((print (syntax-rules ()
+                           ((_ lines ...)
+                            (for-each display `(,lines ...))))))
     (print
-      "Synopsis: Primal Autoconf Software Source Configuration Tool\n"
+      "Synopsis: Wizard -- Software Source Package Configuration\n"
       "Usage:    ./" (car (command-line)) " [options] [variables]\n\n"
-      "Configuration Options:\n"))
-  (as-exit 0))
+      "Configuration Options:\n")
+    (as-exit 0)))
 
 (define ac-init
   (case-lambda
@@ -166,18 +165,21 @@
            (lambda (variable features packages options variables)
              (hash-table-set! variables variable #t)
              (values features packages options variables))
-           (make-hash-table)         ; features table
-           (make-hash-table)         ; packages table
-           (make-hash-table)         ; options table
-           (make-hash-table)))       ; variables table
+           (make-hash-table)
+           (make-hash-table)
+           (make-hash-table)
+           (make-hash-table)))
        (lambda (features packages options variables)
          (current-package (make-package features packages options variables))))
      (when (output-port? (as-message-log-port)) (close-output-port (as-message-log-port)))
      (as-message-log-port (open-output-file "config.log"))
      (when (hash-table-ref/default (package-options (current-package)) 'help #f)
-       (ac-print-usage-and-exit))
+       (print-usage-and-exit))
      (ac-subst 'PACKAGE_NAME package)
      (ac-subst 'PACKAGE_VERSION version))))
+
+(define (ac-output . files)
+  (as-exit))
 
 #|;;> cf-check-pkg-config works like PKG_PROG_PKG_CONFIG
 (define (cf-check-pkg-config :optional (min-version "0.9.0"))

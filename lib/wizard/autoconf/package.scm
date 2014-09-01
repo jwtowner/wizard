@@ -1,5 +1,5 @@
 ;;
-;; Primal Autoconf
+;; Wizard - Automatic software source package configuration
 ;; Copyright (C) 2014 Jesse W. Towner
 ;;
 ;; Redistribution and use in source and binary forms, with or without

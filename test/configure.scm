@@ -1,9 +1,9 @@
 (import (scheme base)
         (scheme write)
-        (primal autoconf))
+        (wizard autoconf))
 
 (ac-prereq "0.1")
-(ac-init "Upcaste Performance Libraries" "0.2" "jesse.towner@hotmail.com")
+(ac-init "Test Sofware" "1.0" "test@test.com")
 
 (as-echo "Hello, World!")
 (as-echo (as-version-compare "1.0" "1.0"))
@@ -12,5 +12,6 @@
 (ac-msg-checking "libc")
 (ac-msg-result "yes")
 (ac-msg-warn "this is a warning!")
-(ac-msg-failure "holy shit")
+(ac-msg-failure "something bad happened!")
 
+(ac-output)

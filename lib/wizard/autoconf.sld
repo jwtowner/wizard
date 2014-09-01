@@ -1,5 +1,5 @@
-(define-library (primal autoconf)
-  (export ac-version ac-prereq ac-arg-enable ac-arg-with ac-arg-var ac-init
+(define-library (wizard autoconf)
+  (export ac-version ac-prereq ac-arg-enable ac-arg-with ac-arg-var ac-init ac-output
           ac-msg-checking ac-msg-result ac-msg-notice ac-msg-warn ac-msg-error ac-msg-failure
           ac-feature ac-feature-exists? ac-feature-ref
           ac-package ac-package-exists? ac-package-ref
@@ -14,8 +14,13 @@
           (scheme write)
           (srfi 37)
           (srfi 69))
+  (cond-expand
+    ((library (ncurses))
+     (import (ncurses))
+     (initscr)))
   (include "autoconf/common.scm")
   (include "autoconf/package.scm")
   (include "autoconf.scm")
   (begin
     (arg-register-options)))
+
