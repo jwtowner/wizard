@@ -30,25 +30,53 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define (ac-msg-checking . args)
-  (apply as-echo-n `("[ Configure ] checking " ,@args " ... ")))
+(define-syntax ac-echo
+  (syntax-rules ()
+    ((_ args ...)
+     (ac-echo-n args ... "\n"))))
 
-(define (ac-msg-result . args)
-  (apply as-echo args))
+(define-syntax ac-msg-notice
+  (syntax-rules ()
+    ((_ args ...)
+     (ac-echo-n "[ " :cyan   "Configure" :normal " ] " args ... "\n"))))
 
-(define (ac-msg-notice . args)
-  (apply as-echo `("[ Configure ] " ,@args)))
+(define-syntax ac-msg-protip
+  (syntax-rules ()
+    ((_ args ...)
+     (ac-echo-n "[ " :blue   " Pro-tip " :normal " ] " args ... "\n"))))
 
-(define (ac-msg-wiztip . args)
-  (apply as-echo `("[  Wiz-Tip  ] " ,@args)))
+(define-syntax ac-msg-warn
+  (syntax-rules ()
+    ((_ args ...)
+     (ac-echo-n "[ " :yellow " Warning " :normal " ] " args ... "\n"))))
 
-(define (ac-msg-warn . args)
-  (apply as-echo `("[  Warning  ] " ,@args)))
+(define-syntax ac-msg-error
+  (syntax-rules ()
+    ((_ args ...)
+     (begin
+       (ac-echo-n "[ " :red  "  Error  " :normal " ] " args ...)
+       (ac-exit -1)))))
 
-(define (ac-msg-error . args)
-  (apply as-echo `("[  Error   ] " ,@args))
-  (ac-exit -1))
+(define-syntax ac-msg-failure
+  (syntax-rules ()
+    ((_ args ...)
+     (begin
+       (ac-echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
+       (ac-echo-n "[ " :red  "  Error  " :normal " ] " :bold "See `config.log' for more details...\n")
+       (ac-exit -1)))))
 
-(define (ac-msg-failure . args)
-  (apply ac-msg-error `(,@args "\n[  Wiz-Tip  ] See `config.log' for more details...")))
+(define-syntax ac-msg-checking
+  (syntax-rules ()
+    ((_ args ...)
+     (ac-echo-n "[ " :cyan   "Configure" :normal " ] checking " args ... " ... "))))
+
+(define-syntax ac-msg-result
+  (syntax-rules (:yes :no)
+    ((_ :yes)
+     (ac-echo-n :bold :italic :green "yes\n"))
+    ((_ :no)
+     (ac-echo-n :bold :italic :red "no\n"))
+    ((_ args ...)
+     (ac-echo-n args ... "\n"))))
+
 

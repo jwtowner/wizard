@@ -35,37 +35,112 @@
 (define message-port (make-parameter #f))
 (define message-log-port (make-parameter #f))
 
-(define (init)
-  (cond-expand 
-    ((library (ncurses))
-     (ncurses:initscr))))
+(define (default-message-ports)
+  (let ((msg-port (message-port))
+        (msg-log-port (message-log-port)))
+    (set! msg-port (or (output-port? msg-port) msg-port (current-output-port)))
+    (if (output-port? msg-log-port)
+      (list msg-port msg-log-port)
+      (list msg-port))))
 
-(define exit
-  (case-lambda
-    (()
-     (exit 0))
-    ((obj)
-     (cond-expand
-       ((library (ncurses))
-        (ncurses:endwin)))
-     (scheme:exit obj))))
+(define color-output? (make-parameter #t))
 
-(define (with-output-to-message-port thunk)
-  (let ((port (message-port)))
-    (if (output-port? port)
-      (parameterize ((current-output-port port))
-        (thunk))
-      (thunk)))
-  (let ((port (message-log-port)))
-    (when (output-port? port)
-      (parameterize ((current-output-port port))
-        (thunk)))))
+(define *color-terminal-supported*
+  (let-syntax ((color-term? (syntax-rules () ((_ t names ...) (or (string=? t names) ...)))))
+    (let ((term (get-environment-variable "TERM")))
+      (if (string? term)
+          (color-term? term "xterm" "xterm-16color" "xterm-88color" "xterm-256color"
+                            "rxvt" "rxvt-16color" "konsole" "konsole-16color")
+          #f))))
 
-(define (as-echo-n . args)
-  (with-output-to-message-port (lambda () (for-each display args))))
+(define (color-terminal-supported?)
+  *color-terminal-supported*)
 
-(define (as-echo . args)
-  (apply as-echo-n `(,@args "\n")))
+(define (color-terminal-port? port)
+  (and *color-terminal-supported*
+       (color-output?)
+       (terminal-port? port)))
+
+(define-syntax define-display-syntax
+  (syntax-rules ()
+    ((_ (name transformer-name) ((display-proc make-command-token) (command-name command-data) ...))
+     (begin
+       (define-syntax transformer-name
+         (syntax-rules (command-name ...)
+           ((transformer-name (args (... ...)) ())
+            (display-proc args (... ...)))
+           ((transformer-name (args (... ...)) (commands (... ...)) command-name expr (... ...))
+            (transformer-name (args (... ...)) (commands (... ...) command-data) expr (... ...))) ...
+           ((transformer-name (args (... ...)) () x expr (... ...))
+            (transformer-name (args (... ...) x) () expr (... ...)))
+           ((transformer-name (args (... ...)) (commands (... ...)) x expr (... ...))
+            (transformer-name (args (... ...) (make-command-token commands (... ...))) () x expr (... ...)))))
+       (define-syntax name
+         (syntax-rules ()
+           ((name expressions (... ...))
+            (transformer-name () () expressions (... ...)))))))))
+
+(define-record-type <ansi-tty-code>
+  (make-ansi-tty-code code)
+  ansi-tty-code?
+  (code ansi-tty-code->string))
+
+(define-syntax make-ansi-tty-command%
+  (syntax-rules ()
+    ((_ commands ...)
+     (make-ansi-tty-code (string-append "\x1B[0" commands ... "m")))))
+
+(define (display-message* port-or-token . tokens)
+  (let loop ((ports (cond
+                      ((output-port? port-or-token)
+                       (list port-or-token))
+                      (else
+                       (set! tokens (cons port-or-token tokens))
+                       (default-message-ports)))))
+    (unless (null? ports)
+      (let ((p (car ports)))
+        (cond
+          ((color-terminal-port? p)
+            (for-each
+              (lambda (t)
+                (if (ansi-tty-code? t)
+                  (write-string (ansi-tty-code->string t) p)
+                  (display t p)))
+              tokens)
+            (write-string "\x1B[0m" p))
+          (else
+            (for-each
+              (lambda (t)
+                (unless (ansi-tty-code? t)
+                  (display t p)))
+              tokens))))
+      (loop (cdr ports)))))
+
+(define-display-syntax (display-message display-message-transformer%)
+  ((display-message* make-ansi-tty-command%)
+    (:normal ";0")
+    (:bold ";1")
+    (:faint ";2")
+    (:italic ";3")
+    (:underline ";4")
+    (:blink ";5")
+    (:strikethrough ";9")
+    (:black ";30")
+    (:red ";31")
+    (:green ";32")
+    (:yellow ";33")
+    (:blue ";34")
+    (:magenta ";35")
+    (:cyan ";36")
+    (:white ";37")
+    (:black-bg ";40")
+    (:red-bg ";41")
+    (:green-bg ";42")
+    (:yellow-bg ";43")
+    (:blue-bg ";44")
+    (:magenta-bg ";45")
+    (:cyan-bg ";46")
+    (:white-bg ";47")))
 
 (define (version-compare* version-a version-b)
   (define (make-next-version-part s)
