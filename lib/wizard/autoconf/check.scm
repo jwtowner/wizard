@@ -30,20 +30,20 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define-syntax ac-check-file
+(define-syntax check-file
   (syntax-rules ()
     ((_ path)
-     (ac-check-file path #t #f))
+     (check-file path #t #f))
     ((_ path action-if-exists)
-     (ac-check-file path action-if-exist #f))
+     (check-file path action-if-exist #f))
     ((_ path action-if-exists action-if-not-found)
      (begin
-       (ac-msg-checking "file `" path "' exists")
+       (msg-checking "file `" path "' exists")
        (cond
          ((file-exists? path)
-           (ac-msg-result :yes)
+           (msg-result :yes)
            action-if-exists)
          (else
-           (ac-msg-result :no)
+           (msg-result :no)
            action-if-not-found))))))
 

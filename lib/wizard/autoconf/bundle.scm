@@ -31,8 +31,9 @@
 ;;
 
 (define-record-type <bundle>
-  (make-bundle definitions features packages options variables)
+  (make-bundle cache definitions features packages options variables)
   bundle?
+  (cache bundle-cache)
   (definitions bundle-definitions)
   (features bundle-features)
   (options bundle-options)
@@ -44,6 +45,19 @@
     (case-lambda
       (()      (or bundle (error "ac-init was not called to initialize configuration bundle")))
       ((value) (set! bundle value)))))
+
+(define (ac-cache-variable variable value)
+  (hash-table-set! (bundle-cache (current-bundle)) variable value))
+
+(define ac-cache-variable-ref
+  (case-lambda
+    ((variable)
+     (hash-table-ref (bundle-definitions (current-bundle)) variable))
+    ((variable default)
+     (hash-table-ref/default (bundle-definitions (current-bundle)) variable default))))
+
+(define (ac-cache-variable? variable)
+  (hash-table-exists? (bundle-cache (current-bundle)) variable))
 
 (define ac-define
   (case-lambda

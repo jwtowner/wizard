@@ -162,13 +162,14 @@
            (lambda (variable features packages options variables)
              (hash-table-set! variables variable #t)
              (values features packages options variables))
-           (make-hash-table)
-           (make-hash-table)
-           (make-hash-table)
-           (make-hash-table)))
+           (make-hash-table)           ; features
+           (make-hash-table)           ; packages
+           (make-hash-table)           ; options
+           (make-hash-table)))         ; variables
        (lambda (features packages options variables)
          (current-bundle
            (make-bundle
+             (make-hash-table)         ; cache
              (make-hash-table)         ; definitions
              features
              packages
