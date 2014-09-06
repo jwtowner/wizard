@@ -167,7 +167,13 @@
            (make-hash-table)
            (make-hash-table)))
        (lambda (features packages options variables)
-         (current-bundle (make-bundle features packages options variables))))
+         (current-bundle
+           (make-bundle
+             (make-hash-table)         ; definitions
+             features
+             packages
+             options
+             variables))))
      (when (output-port? (ac-message-log-port)) (close-output-port (ac-message-log-port)))
      (ac-message-log-port (open-output-file "config.log"))
      (when (hash-table-ref/default (bundle-options (current-bundle)) 'help #f)

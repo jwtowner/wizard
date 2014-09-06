@@ -31,11 +31,12 @@
 ;;
 
 (define-record-type <bundle>
-  (make-bundle features packages options variables)
+  (make-bundle definitions features packages options variables)
   bundle?
+  (definitions bundle-definitions)
   (features bundle-features)
-  (packages bundle-packages)
   (options bundle-options)
+  (packages bundle-packages)
   (variables bundle-variables))
 
 (define current-bundle
@@ -43,6 +44,25 @@
     (case-lambda
       (()      (or bundle (error "ac-init was not called to initialize configuration bundle")))
       ((value) (set! bundle value)))))
+
+(define ac-define
+  (case-lambda
+    ((variable)
+     (ac-define variable 1 ""))
+    ((variable value)
+     (ac-define variable value ""))
+    ((variable value description)
+     (hash-table-set! (bundle-definitions (current-bundle)) variable (cons value description)))))
+
+(define ac-define-ref
+  (case-lambda
+    ((variable)
+     (hash-table-ref (bundle-definitions (current-bundle)) variable))
+    ((variable default)
+     (hash-table-ref/default (bundle-definitions (current-bundle)) variable default))))
+
+(define (ac-define-exists? variable)
+  (hash-table-exists? (bundle-definitions (current-bundle)) variable))
 
 (define ac-feature
   (case-lambda
@@ -78,16 +98,16 @@
 (define (ac-package-exists? package)
   (hash-table-exists? (bundle-packages (current-bundle)) package))
 
-(define (ac-subst symbol value)
-  (hash-table-set! (bundle-variables (current-bundle)) symbol value))
+(define (ac-subst variable value)
+  (hash-table-set! (bundle-variables (current-bundle)) variable value))
 
 (define ac-subst-ref
   (case-lambda
-    ((symbol)
-     (hash-table-ref (bundle-variables (current-bundle)) symbol))
-    ((symbol default)
-     (hash-table-ref/default (bundle-variables (current-bundle)) symbol default))))
+    ((variable)
+     (hash-table-ref (bundle-variables (current-bundle)) variable))
+    ((variable default)
+     (hash-table-ref/default (bundle-variables (current-bundle)) variable default))))
 
-(define (ac-subst-exists? symbol)
-  (hash-table-exists? (bundle-variables (current-bundle)) symbol))
+(define (ac-subst-exists? variable)
+  (hash-table-exists? (bundle-variables (current-bundle)) variable))
 

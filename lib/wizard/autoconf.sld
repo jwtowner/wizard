@@ -1,5 +1,6 @@
 (define-library (wizard autoconf)
   (export ac-version ac-prereq ac-arg-enable ac-arg-with ac-arg-var ac-init ac-output ac-exit
+          ac-define ac-define-exists? ac-define-ref
           ac-feature ac-feature-exists? ac-feature-ref
           ac-package ac-package-exists? ac-package-ref
           ac-subst ac-subst-exists? ac-subst-ref
