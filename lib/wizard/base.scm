@@ -80,15 +80,15 @@
            ((name expressions (... ...))
             (transformer-name () () expressions (... ...)))))))))
 
-(define-record-type <ansi-tty-code>
-  (make-ansi-tty-code code)
-  ansi-tty-code?
-  (code ansi-tty-code->string))
+(define-record-type <ansi-tty-command>
+  (ansi-tty-command code)
+  ansi-tty-command?
+  (code ansi-tty-command->string))
 
-(define-syntax make-ansi-tty-command%
+(define-syntax make-ansi-tty-command
   (syntax-rules ()
     ((_ commands ...)
-     (make-ansi-tty-code (string-append "\x1B[0" commands ... "m")))))
+     (ansi-tty-command (string-append "\x1B[0" commands ... "m")))))
 
 (define (display-message* port-or-token . tokens)
   (let loop ((ports (cond
@@ -103,21 +103,21 @@
           ((color-terminal-port? p)
             (for-each
               (lambda (t)
-                (if (ansi-tty-code? t)
-                  (write-string (ansi-tty-code->string t) p)
+                (if (ansi-tty-command? t)
+                  (write-string (ansi-tty-command->string t) p)
                   (display t p)))
               tokens)
             (write-string "\x1B[0m" p))
           (else
             (for-each
               (lambda (t)
-                (unless (ansi-tty-code? t)
+                (unless (ansi-tty-command? t)
                   (display t p)))
               tokens))))
       (loop (cdr ports)))))
 
 (define-display-syntax (display-message display-message-transformer%)
-  ((display-message* make-ansi-tty-command%)
+  ((display-message* make-ansi-tty-command)
     (:normal ";0")
     (:bold ";1")
     (:faint ";2")
@@ -145,14 +145,14 @@
 (define (version-compare* version-a version-b)
   (define (make-next-version-part s)
     (let ((last 0)
-          (s-length (string-length s)))
+          (slen (string-length s)))
       (lambda ()
         (let loop ((first last)
                    (i last))
           (cond
-            ((> i s-length)
+            ((> i slen)
              '(0 . #t))
-            ((or (= i s-length)
+            ((or (= i slen)
                  (char=? (string-ref s i) #\.))
              (set! last (+ i 1))
              `(,(string->number (string-copy s first i)) . #f))

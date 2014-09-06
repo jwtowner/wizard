@@ -2,9 +2,12 @@
   (export original-input-port original-output-port
           message-port message-log-port
           color-output? color-terminal-supported? color-terminal-port?
-          define-display-syntax display-message
-          display-message* display-message-transformer%
-          make-ansi-tty-command% make-ansi-tty-code ansi-tty-code? ansi-tty-code->string
+          define-display-syntax
+          display-message display-message* display-message-transformer%
+          make-ansi-tty-command ansi-tty-command ansi-tty-command? ansi-tty-command->string
+
+          file-exists?
+
           version-compare* version-compare version=?
           version<? version>? version<=? version>=?)
   (import (scheme base)

@@ -34,15 +34,15 @@
 
 (define (ac-prereq version)
   (when (ac-version<? (ac-version) version)
-    (ac-msg-error "Primal Autoconf version " version " or higher is required!")))
+    (ac-msg-error "Wizard version " version " or higher is required!")))
 
-(define arg-option-processors '())
-(define arg-feature-processors '())
-(define arg-package-processors '())
-(define arg-configuration-help '())
-(define arg-base-output-help '())
-(define arg-sub-output-help '())
-(define arg-environment-help '())
+(define *option-processors* '())
+(define *feature-processors* '())
+(define *package-processors* '())
+(define *configuration-help* '())
+(define *base-output-help* '())
+(define *sub-output-help* '())
+(define *environment-help* '())
 
 (define ac-arg-enable
   (case-lambda
@@ -52,10 +52,10 @@
      (ac-arg-enable feature help-string action-if-given (lambda () #f)))
     ((feature help-string action-if-given action-if-not-given)
      (set!
-       arg-feature-processors
+       *feature-processors*
        (cons
          (list feature help-string action-if-given action-if-not-given)
-         arg-feature-processors)))))
+         *feature-processors*)))))
 
 (define ac-arg-with
   (case-lambda
@@ -65,23 +65,23 @@
      (ac-arg-with package help-string action-if-given (lambda () #f)))
     ((package help-string action-if-given action-if-not-given)
      (set!
-       arg-package-processors
+       *package-processors*
        (cons 
          (list package help-string action-if-given action-if-not-given)
-         arg-package-processors)))))
+         *package-processors*)))))
 
 (define (ac-arg-var name help-string)
-  (set! arg-environment-help (cons (cons name help-string) arg-environment-help)))
+  (set! *environment-help* (cons (cons name help-string) *environment-help*)))
 
 (define (arg-register-option canonical-name option-names required-arg? optional-arg? help-details)
   (set!
-    arg-option-processors
+    *option-processors*
     (cons
       (option option-names required-arg? optional-arg? 
-             (lambda (option name arg features packages options variables)
-               (hash-table-set! options canonical-name (or arg #t))
-               (values features packages options variables)))
-      arg-option-processors))
+              (lambda (option name arg features packages options variables)
+                (hash-table-set! options canonical-name (or arg #t))
+                (values features packages options variables)))
+      *option-processors*))
   (cons canonical-name help-details))
 
 (define (arg-io-variable-processor option name arg features packages options variables)
@@ -90,10 +90,10 @@
 
 (define (arg-register-io-variable name default help-arg-name help-details)
   (set!
-    arg-option-processors
+    *option-processors*
     (cons
       (option `(,(symbol->string name)) #t #f arg-io-variable-processor)
-      arg-option-processors))
+      *option-processors*))
   (cons name help-details))
 
 (define (arg-register-options)
@@ -103,20 +103,20 @@
                               (lambda (a)
                                 (set! alist (cons (apply proc a) alist)))
                               `(,options ...))))))
-    (register (arg-register-option arg-configuration-help)
+    (register (arg-register-option *configuration-help*)
       '(help             (#\h "help") #f #t             "display this help and exit")
       '(version          (#\V "version") #f #t          "display version information and exit")
       '(quiet            (#\q "quiet" "silent") #f #t   "do not print `[ Configure ]' messages")
       '(no-create        (#\n "no-create") #f #f        "do not create output files")
       '(no-colors        ("no-colors") #f #f            "disable colored output to terminal")
       '(config-cache     (#\C "config-cache") #f #f     "alias for `--cache-file=config.cache'"))
-    (register (arg-register-io-variable arg-configuration-help)
+    (register (arg-register-io-variable *configuration-help*)
       '(cache-file       #f                       "FILE" "cache test results in FILE")
       '(srcdir           #f                        "DIR" "find the sources in DIR [configure dir or `..']"))
-    (register (arg-register-io-variable arg-base-output-help)
+    (register (arg-register-io-variable *base-output-help*)
       '(prefix          "/usr/local"            "PREFIX" "install architecture-independent files in PREFIX")
       '(exec-prefix     "${prefix}"            "EPREFIX" "install architecture-dependent files in EPREFIX"))
-    (register (arg-register-io-variable arg-sub-output-help)
+    (register (arg-register-io-variable *sub-output-help*)
       '(bindir          "${eprefix}/bin"           "DIR" "user executables")
       '(sbindir         "${eprefix}/sbin"          "DIR" "system admin executables")
       '(libexecdir      "${eprefix}/libexec"       "DIR" "program executables")
@@ -134,17 +134,14 @@
       '(htmldir         "${docdir}"                "DIR" "html documentation")
       '(dvidir          "${docdir}"                "DIR" "dvi documentation")
       '(pdfdir          "${docdir}"                "DIR" "pdf documentation")
-      '(psdir           "${docdir}"                "DIR" "ps documentation [DOCDIR]"))))
+      '(psdir           "${docdir}"                "DIR" "ps documentation"))))
 
 (define (print-usage-and-exit)
-  (letrec-syntax ((print (syntax-rules ()
-                           ((_ lines ...)
-                            (for-each display `(,lines ...))))))
-    (print
-      "Synopsis: Wizard -- Software Source Package Configuration\n"
-      "Usage:    ./" (car (command-line)) " [options] [variables]\n\n"
-      "Configuration Options:\n")
-    (ac-exit)))
+    (ac-echo-n
+      :bold "Synopsis" :normal ": Wizard -- Automatic Software Source Package Configuration\n"
+      :bold "Usage"    :normal ":    ./" (car (command-line)) " [options] [variables]\n\n"
+      :bold "Configuration Options" :normal ":\n")
+    (ac-exit))
 
 (define ac-init
   (case-lambda
@@ -159,7 +156,7 @@
        (lambda ()
          (args-fold
            (cdr (command-line))
-           (reverse arg-option-processors)
+           (reverse *option-processors*)
            (lambda (option name arg features packages options variables)
              (ac-msg-error "Unrecognized option: " name))
            (lambda (variable features packages options variables)
@@ -181,15 +178,15 @@
 (define (ac-output . files)
   (ac-exit))
 
-#|;;> cf-check-pkg-config works like PKG_PROG_PKG_CONFIG
-(define (cf-check-pkg-config :optional (min-version "0.9.0"))
-  (cf-path-prog 'PKG_CONFIG "pkg-config")
-  (if (cf-have-subst? 'PKG_CONFIG)
-    (let ((proc (run-process `(,(cf-ref 'PKG_CONFIG) --version) :redirects '((>& 2 1) (> 1 out)))))
+#|;; ac-check-pkg-config works like PKG_PROG_PKG_CONFIG
+(define (ac-check-pkg-config :optional (min-version "0.9.0"))
+  (ac-path-prog 'PKG_CONFIG "pkg-config")
+  (if (ac-have-subst? 'PKG_CONFIG)
+    (let ((proc (run-process `(,(ac-subst-ref 'PKG_CONFIG) "--version") :redirects '((>& 2 1) (> 1 out)))))
       (let ((version (read-line (process-output proc 'out))))
-        (cf-msg-checking "pkg-config is at least version ~a " min-version)
+        (ac-msg-checking "pkg-config is at least version ~a " min-version)
         (if (version<=? min-version version)
-          (cf-msg-result "yes")
-          (begin (cf-msg-result "no") (cf-subst 'PKG_CONFIG #f))))
+          (ac-msg-result "yes")
+          (begin (ac-msg-result "no") (ac-subst 'PKG_CONFIG #f))))
       (process-wait proc))))
 |#

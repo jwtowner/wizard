@@ -30,53 +30,20 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define-syntax ac-echo
+(define-syntax ac-check-file
   (syntax-rules ()
-    ((_ args ...)
-     (ac-echo-n args ... "\n"))))
-
-(define-syntax ac-msg-notice
-  (syntax-rules ()
-    ((_ args ...)
-     (ac-echo-n "[ " :cyan   "Configure" :normal " ] " args ... "\n"))))
-
-(define-syntax ac-msg-protip
-  (syntax-rules ()
-    ((_ args ...)
-     (ac-echo-n "[ " :blue   " Pro-tip " :normal " ] " args ... "\n"))))
-
-(define-syntax ac-msg-warn
-  (syntax-rules ()
-    ((_ args ...)
-     (ac-echo-n "[ " :yellow " Warning " :normal " ] " args ... "\n"))))
-
-(define-syntax ac-msg-error
-  (syntax-rules ()
-    ((_ args ...)
+    ((_ path)
+     (ac-check-file path #t #f))
+    ((_ path action-if-exists)
+     (ac-check-file path action-if-exist #f))
+    ((_ path action-if-exists action-if-not-found)
      (begin
-       (ac-echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
-       (ac-exit -1)))))
-
-(define-syntax ac-msg-failure
-  (syntax-rules ()
-    ((_ args ...)
-     (begin
-       (ac-echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
-       (ac-echo-n "[ " :red  "  Error  " :normal " ] " :bold "See `config.log' for more details...\n")
-       (ac-exit -1)))))
-
-(define-syntax ac-msg-checking
-  (syntax-rules ()
-    ((_ args ...)
-     (ac-echo-n "[ " :cyan   "Configure" :normal " ] checking " args ... " ... "))))
-
-(define-syntax ac-msg-result
-  (syntax-rules (:yes :no)
-    ((_ :yes)
-     (ac-echo-n :bold :italic :green "yes\n"))
-    ((_ :no)
-     (ac-echo-n :bold :italic :red "no\n"))
-    ((_ args ...)
-     (ac-echo-n args ... "\n"))))
-
+       (ac-msg-checking "file `" path "' exists")
+       (cond
+         ((file-exists? path)
+           (ac-msg-result :yes)
+           action-if-exists)
+         (else
+           (ac-msg-result :no)
+           action-if-not-found))))))
 
