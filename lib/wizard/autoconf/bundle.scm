@@ -30,64 +30,64 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define-record-type <package>
-  (make-package features packages options variables)
-  package?
-  (features package-features)
-  (packages package-packages)
-  (options package-options)
-  (variables package-variables))
+(define-record-type <bundle>
+  (make-bundle features packages options variables)
+  bundle?
+  (features bundle-features)
+  (packages bundle-packages)
+  (options bundle-options)
+  (variables bundle-variables))
 
-(define current-package
-  (let ((package #f))
+(define current-bundle
+  (let ((bundle #f))
     (case-lambda
-      (()      (or package (error "ac-init was not called to initialize package")))
-      ((value) (set! package value)))))
+      (()      (or bundle (error "ac-init was not called to initialize configuration bundle")))
+      ((value) (set! bundle value)))))
 
 (define ac-feature
   (case-lambda
     ((feature)
      (ac-feature feature "yes"))
     ((feature value)
-     (hash-table-set! (package-features (current-package)) feature value))))
+     (hash-table-set! (bundle-features (current-bundle)) feature value))))
 
 (define ac-feature-ref
   (case-lambda
     ((feature)
-     (hash-table-ref (package-features (current-package)) feature))
+     (hash-table-ref (bundle-features (current-bundle)) feature))
     ((feature default)
-     (hash-table-ref/default (package-features (current-package)) feature))))
+     (hash-table-ref/default (bundle-features (current-bundle)) feature))))
 
 (define (ac-feature-exists? feature)
-  (hash-table-exists? (package-features (current-package)) feature))
+  (hash-table-exists? (bundle-features (current-bundle)) feature))
 
 (define ac-package
   (case-lambda
     ((package)
      (ac-package package "yes"))
     ((package value)
-     (hash-table-set! (package-packages (current-package)) package value))))
+     (hash-table-set! (bundle-packages (current-bundle)) package value))))
 
 (define ac-package-ref
   (case-lambda
     ((package)
-     (hash-table-ref (package-packages (current-package)) package))
+     (hash-table-ref (bundle-packages (current-bundle)) package))
     ((package default)
-     (hash-table-ref/default (package-packages (current-package)) package))))
+     (hash-table-ref/default (bundle-packages (current-bundle)) package))))
 
 (define (ac-package-exists? package)
-  (hash-table-exists? (package-packages (current-package)) package))
+  (hash-table-exists? (bundle-packages (current-bundle)) package))
 
 (define (ac-subst symbol value)
-  (hash-table-set! (package-variables (current-package)) symbol value))
+  (hash-table-set! (bundle-variables (current-bundle)) symbol value))
 
 (define ac-subst-ref
   (case-lambda
     ((symbol)
-     (hash-table-ref (package-variables (current-package)) symbol))
+     (hash-table-ref (bundle-variables (current-bundle)) symbol))
     ((symbol default)
-     (hash-table-ref/default (package-variables (current-package)) symbol default))))
+     (hash-table-ref/default (bundle-variables (current-bundle)) symbol default))))
 
 (define (ac-subst-exists? symbol)
-  (hash-table-exists? (package-variables (current-package)) symbol))
+  (hash-table-exists? (bundle-variables (current-bundle)) symbol))
 

@@ -27,8 +27,8 @@
             (version>? ac-version>?)
             (version<=? ac-version<=?)
             (version>=? ac-version>=?)))
+  (include "autoconf/bundle.scm")
   (include "autoconf/message.scm")
-  (include "autoconf/package.scm")
   (include "autoconf.scm")
   (begin
     (arg-register-options)))
