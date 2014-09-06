@@ -6,8 +6,8 @@
           display-message display-message* display-message-transformer%
           make-ansi-tty-command ansi-tty-command ansi-tty-command? ansi-tty-command->string
 
-          version-compare* version-compare version=?
-          version<? version>? version<=? version>=?)
+          version version-compare* version-compare
+          version=? version<? version>? version<=? version>=?)
   (import (scheme base)
           (scheme case-lambda)
           (scheme file)

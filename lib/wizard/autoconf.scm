@@ -30,12 +30,6 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define (ac-version) "0.1")
-
-(define (ac-prereq version)
-  (when (ac-version<? (ac-version) version)
-    (ac-msg-error "Wizard version " version " or higher is required!")))
-
 (define *option-processors* '())
 (define *feature-processors* '())
 (define *package-processors* '())
@@ -44,12 +38,16 @@
 (define *sub-output-help* '())
 (define *environment-help* '())
 
-(define ac-arg-enable
+(define (prereq min-required-version)
+  (when (version<? (version) min-required-version)
+    (msg-error "Wizard version " min-required-version " or higher is required!")))
+
+(define arg-enable
   (case-lambda
     ((feature help-string)
-     (ac-arg-enable feature help-string (lambda (v) #f) (lambda () #f)))
+     (arg-enable feature help-string (lambda (v) #f) (lambda () #f)))
     ((feature help-string action-if-given)
-     (ac-arg-enable feature help-string action-if-given (lambda () #f)))
+     (arg-enable feature help-string action-if-given (lambda () #f)))
     ((feature help-string action-if-given action-if-not-given)
      (set!
        *feature-processors*
@@ -57,12 +55,12 @@
          (list feature help-string action-if-given action-if-not-given)
          *feature-processors*)))))
 
-(define ac-arg-with
+(define arg-with
   (case-lambda
     ((package help-string)
-     (ac-arg-with package help-string (lambda (v) #f) (lambda () #f)))
+     (arg-with package help-string (lambda (v) #f) (lambda () #f)))
     ((package help-string action-if-given)
-     (ac-arg-with package help-string action-if-given (lambda () #f)))
+     (arg-with package help-string action-if-given (lambda () #f)))
     ((package help-string action-if-given action-if-not-given)
      (set!
        *package-processors*
@@ -70,7 +68,7 @@
          (list package help-string action-if-given action-if-not-given)
          *package-processors*)))))
 
-(define (ac-arg-var name help-string)
+(define (arg-var name help-string)
   (set! *environment-help* (cons (cons name help-string) *environment-help*)))
 
 (define (arg-register-option canonical-name option-names required-arg? optional-arg? help-details)
@@ -96,7 +94,7 @@
       *option-processors*))
   (cons name help-details))
 
-(define (arg-register-options)
+(define (register-options)
   (let-syntax ((register (syntax-rules()
                            ((_ (proc alist) options ...)
                             (for-each
@@ -137,20 +135,20 @@
       '(psdir           "${docdir}"                "DIR" "ps documentation"))))
 
 (define (print-usage-and-exit)
-    (ac-echo-n
+    (echo-n
       :bold "Synopsis" :normal ": Wizard -- Automatic Software Source Package Configuration\n"
       :bold "Usage"    :normal ":    ./" (car (command-line)) " [options] [variables]\n\n"
       :bold "Configuration Options" :normal ":\n")
-    (ac-exit))
+    (exit))
 
-(define ac-init
+(define init
   (case-lambda
     ((package version)
-     (ac-init package version "" "" ""))
+     (init package version "" "" ""))
     ((package version bug-report)
-     (ac-init package version bug-report "" ""))
+     (init package version bug-report "" ""))
     ((package version bug-report tarname)
-     (ac-init package version bug-report tarname ""))
+     (init package version bug-report tarname ""))
     ((package version bug-report tarname url)
      (call-with-values
        (lambda ()
@@ -158,7 +156,7 @@
            (cdr (command-line))
            (reverse *option-processors*)
            (lambda (option name arg features packages options variables)
-             (ac-msg-error "Unrecognized option: " name))
+             (msg-error "Unrecognized option: " name))
            (lambda (variable features packages options variables)
              (hash-table-set! variables variable #t)
              (values features packages options variables))
@@ -175,25 +173,25 @@
              packages
              options
              variables))))
-     (when (output-port? (ac-message-log-port)) (close-output-port (ac-message-log-port)))
-     (ac-message-log-port (open-output-file "config.log"))
+     (when (output-port? (message-log-port)) (close-output-port (message-log-port)))
+     (message-log-port (open-output-file "config.log"))
      (when (hash-table-ref/default (bundle-options (current-bundle)) 'help #f)
        (print-usage-and-exit))
-     (ac-subst 'PACKAGE_NAME package)
-     (ac-subst 'PACKAGE_VERSION version))))
+     (subst 'PACKAGE_NAME package)
+     (subst 'PACKAGE_VERSION version))))
 
-(define (ac-output . files)
-  (ac-exit))
+(define (output . files)
+  (exit))
 
-#|;; ac-check-pkg-config works like PKG_PROG_PKG_CONFIG
-(define (ac-check-pkg-config :optional (min-version "0.9.0"))
-  (ac-path-prog 'PKG_CONFIG "pkg-config")
-  (if (ac-have-subst? 'PKG_CONFIG)
-    (let ((proc (run-process `(,(ac-subst-ref 'PKG_CONFIG) "--version") :redirects '((>& 2 1) (> 1 out)))))
+#|;; check-pkg-config works like PKG_PROG_PKG_CONFIG
+(define (check-pkg-config :optional (min-version "0.9.0"))
+  (path-prog 'PKG_CONFIG "pkg-config")
+  (if (have-subst? 'PKG_CONFIG)
+    (let ((proc (run-process `(,(subst-ref 'PKG_CONFIG) "--version") :redirects '((>& 2 1) (> 1 out)))))
       (let ((version (read-line (process-output proc 'out))))
-        (ac-msg-checking "pkg-config is at least version ~a " min-version)
+        (msg-checking "pkg-config is at least version ~a " min-version)
         (if (version<=? min-version version)
-          (ac-msg-result "yes")
-          (begin (ac-msg-result "no") (ac-subst 'PKG_CONFIG #f))))
+          (msg-result "yes")
+          (begin (msg-result "no") (subst 'PKG_CONFIG #f))))
       (process-wait proc))))
 |#

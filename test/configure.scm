@@ -1,6 +1,6 @@
 (import (scheme base)
         (scheme write)
-        (wizard autoconf))
+        (prefix (wizard autoconf) ac-))
 
 (ac-prereq "0.1")
 (ac-init "Test Sofware" "1.0" "test@test.com")

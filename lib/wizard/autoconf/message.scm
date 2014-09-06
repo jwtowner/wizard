@@ -30,53 +30,52 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define-syntax ac-echo
+(define-syntax echo
   (syntax-rules ()
     ((_ args ...)
-     (ac-echo-n args ... "\n"))))
+     (echo-n args ... "\n"))))
 
-(define-syntax ac-msg-notice
+(define-syntax msg-notice
   (syntax-rules ()
     ((_ args ...)
-     (ac-echo-n "[ " :cyan   "Configure" :normal " ] " args ... "\n"))))
+     (echo-n "[ " :cyan   "Configure" :normal " ] " args ... "\n"))))
 
-(define-syntax ac-msg-protip
+(define-syntax msg-protip
   (syntax-rules ()
     ((_ args ...)
-     (ac-echo-n "[ " :blue   " Pro-tip " :normal " ] " args ... "\n"))))
+     (echo-n "[ " :blue   " Pro-tip " :normal " ] " args ... "\n"))))
 
-(define-syntax ac-msg-warn
+(define-syntax msg-warn
   (syntax-rules ()
     ((_ args ...)
-     (ac-echo-n "[ " :yellow " Warning " :normal " ] " args ... "\n"))))
+     (echo-n "[ " :yellow " Warning " :normal " ] " args ... "\n"))))
 
-(define-syntax ac-msg-error
-  (syntax-rules ()
-    ((_ args ...)
-     (begin
-       (ac-echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
-       (ac-exit -1)))))
-
-(define-syntax ac-msg-failure
+(define-syntax msg-error
   (syntax-rules ()
     ((_ args ...)
      (begin
-       (ac-echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
-       (ac-echo-n "[ " :red  "  Error  " :normal " ] " :bold "See `config.log' for more details...\n")
-       (ac-exit -1)))))
+       (echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
+       (exit -1)))))
 
-(define-syntax ac-msg-checking
+(define-syntax msg-failure
   (syntax-rules ()
     ((_ args ...)
-     (ac-echo-n "[ " :cyan   "Configure" :normal " ] checking " args ... " ... "))))
+     (begin
+       (echo-n "[ " :red  "  Error  " :normal " ] " args ... "\n")
+       (echo-n "[ " :red  "  Error  " :normal " ] " :bold "See `config.log' for more details...\n")
+       (exit -1)))))
 
-(define-syntax ac-msg-result
+(define-syntax msg-checking
+  (syntax-rules ()
+    ((_ args ...)
+     (echo-n "[ " :cyan   "Configure" :normal " ] checking " args ... " ... "))))
+
+(define-syntax msg-result
   (syntax-rules (:yes :no)
     ((_ :yes)
-     (ac-echo-n :bold :italic :green "yes\n"))
+     (echo-n :bold :italic :green "yes\n"))
     ((_ :no)
-     (ac-echo-n :bold :italic :red "no\n"))
+     (echo-n :bold :italic :red "no\n"))
     ((_ args ...)
-     (ac-echo-n args ... "\n"))))
-
+     (echo-n args ... "\n"))))
 

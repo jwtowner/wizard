@@ -1,36 +1,27 @@
 (define-library (wizard autoconf)
-  (export ac-version ac-prereq ac-arg-enable ac-arg-with ac-arg-var ac-init ac-output ac-exit
-          ac-define ac-define-exists? ac-define-ref
-          ac-feature ac-feature-exists? ac-feature-ref
-          ac-package ac-package-exists? ac-package-ref
-          ac-subst ac-subst-exists? ac-subst-ref
-          ac-msg-checking ac-msg-result ac-msg-protip ac-msg-notice
-          ac-msg-warn ac-msg-error ac-msg-failure ac-echo ac-echo-n
-          ac-message-port ac-message-log-port ac-original-input-port
-          ac-version-compare ac-version=? ac-version<? ac-version>?
-          ac-version<=? ac-version>=?)
+  (export version prereq arg-enable arg-with arg-var init output exit
+          cache-variable cache-variable-exists? cache-variable-ref
+          config-define config-define-exists? config-define-ref
+          feature feature-exists? feature-ref
+          package package-exists? package-ref
+          subst subst-exists? subst-ref
+          msg-checking msg-result msg-protip msg-notice
+          msg-warn msg-error msg-failure echo echo-n
+          message-port message-log-port original-input-port
+          version-compare version=? version<? version>? version<=? version>=?)
   (import (scheme base)
           (scheme case-lambda)
           (scheme file)
           (scheme write)
-          (except (scheme process-context) exit)
-          (rename (scheme process-context) (exit ac-exit))
+          (scheme process-context)
           (srfi 37)
           (srfi 69)
+          (wizard base)
           (rename (wizard base)
-            (display-message ac-echo-n)
-            (message-port ac-message-port)
-            (message-log-port ac-message-log-port)
-            (original-input-port ac-original-input-port)
-            (version-compare ac-version-compare)
-            (version=? ac-version=?)
-            (version<? ac-version<?)
-            (version>? ac-version>?)
-            (version<=? ac-version<=?)
-            (version>=? ac-version>=?)))
+            (display-message echo-n)))
   (include "autoconf/bundle.scm")
   (include "autoconf/message.scm")
   (include "autoconf.scm")
   (begin
-    (arg-register-options)))
+    (register-options)))
 

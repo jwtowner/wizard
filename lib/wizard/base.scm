@@ -30,6 +30,60 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
+(define (version) "0.1") 
+      
+(define (version-compare* version-a version-b)
+  (define (make-next-version-part s)
+    (let ((last 0)
+          (slen (string-length s)))
+      (lambda ()
+        (let loop ((first last)
+                   (i last))
+          (cond
+            ((> i slen)
+             '(0 . #t))
+            ((or (= i slen)
+                 (char=? (string-ref s i) #\.))
+             (set! last (+ i 1))
+             `(,(string->number (string-copy s first i)) . #f))
+            (else
+             (loop first (+ i 1))))))))
+  (let ((next-version-part-a (make-next-version-part version-a))
+        (next-version-part-b (make-next-version-part version-b)))
+    (let loop ((a (next-version-part-a))
+               (b (next-version-part-b)))
+      (if (and (cdr a) (cdr b))
+        0
+        (let ((d (- (car a) (car b))))
+          (if (not (= d 0))
+            d
+            (loop (next-version-part-a)
+                  (next-version-part-b))))))))
+
+(define-syntax version-compare
+  (syntax-rules ()
+    ((_ version1 version2)
+     (version-compare* version1 version2))
+    ((_ version1 version2 action-if-less)
+     (when (< (version-compare* version1 version2) 0)
+       action-if-less))
+    ((_ version1 version2 action-if-less action-if-greater-equal)
+     (if (< (version-compare* version1 version2) 0)
+       action-if-less
+       action-if-greater-equal))
+    ((_ version1 version2 action-if-less action-if-equal action-if-greater)
+     (let ((ordinal (version-compare* version1 version2)))
+       (cond
+         ((< ordinal 0) action-if-less)
+         ((> ordinal 0) action-if-greater)
+         (else action-if-equal))))))
+
+(define (version=? version1 version2) (= (version-compare* version1 version2) 0))
+(define (version<? version1 version2) (< (version-compare* version1 version2) 0))
+(define (version>? version1 version2) (> (version-compare* version1 version2) 0))
+(define (version<=? version1 version2) (<= (version-compare* version1 version2) 0))
+(define (version>=? version1 version2) (>= (version-compare* version1 version2) 0))
+
 (define original-input-port (make-parameter (current-input-port)))
 (define original-output-port (make-parameter (current-output-port)))
 (define message-port (make-parameter #f))
@@ -141,59 +195,7 @@
     (:magenta-bg ";45")
     (:cyan-bg ";46")
     (:white-bg ";47")))
-
-(define (version-compare* version-a version-b)
-  (define (make-next-version-part s)
-    (let ((last 0)
-          (slen (string-length s)))
-      (lambda ()
-        (let loop ((first last)
-                   (i last))
-          (cond
-            ((> i slen)
-             '(0 . #t))
-            ((or (= i slen)
-                 (char=? (string-ref s i) #\.))
-             (set! last (+ i 1))
-             `(,(string->number (string-copy s first i)) . #f))
-            (else
-             (loop first (+ i 1))))))))
-  (let ((next-version-part-a (make-next-version-part version-a))
-        (next-version-part-b (make-next-version-part version-b)))
-    (let loop ((a (next-version-part-a))
-               (b (next-version-part-b)))
-      (if (and (cdr a) (cdr b))
-        0
-        (let ((d (- (car a) (car b))))
-          (if (not (= d 0))
-            d
-            (loop (next-version-part-a)
-                  (next-version-part-b))))))))
-
-(define-syntax version-compare
-  (syntax-rules ()
-    ((_ version1 version2)
-     (version-compare* version1 version2))
-    ((_ version1 version2 action-if-less)
-     (when (< (version-compare* version1 version2) 0)
-       action-if-less))
-    ((_ version1 version2 action-if-less action-if-greater-equal)
-     (if (< (version-compare* version1 version2) 0)
-       action-if-less
-       action-if-greater-equal))
-    ((_ version1 version2 action-if-less action-if-equal action-if-greater)
-     (let ((ordinal (version-compare* version1 version2)))
-       (cond
-         ((< ordinal 0) action-if-less)
-         ((> ordinal 0) action-if-greater)
-         (else action-if-equal))))))
-
-(define (version=? version1 version2) (= (version-compare* version1 version2) 0))
-(define (version<? version1 version2) (< (version-compare* version1 version2) 0))
-(define (version>? version1 version2) (> (version-compare* version1 version2) 0))
-(define (version<=? version1 version2) (<= (version-compare* version1 version2) 0))
-(define (version>=? version1 version2) (>= (version-compare* version1 version2) 0))
-
+ 
 ; (define executeable?)
 ; (define mkdir )
 ; (define tmpdir (case-lambda ))
