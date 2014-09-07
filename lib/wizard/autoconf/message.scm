@@ -72,10 +72,10 @@
 
 (define-syntax msg-result
   (syntax-rules (:yes :no)
-    ((_ :yes)
-     (echo-n :bold :italic :green "yes\n"))
-    ((_ :no)
-     (echo-n :bold :italic :red "no\n"))
+    ((_ :yes args ...)
+     (echo-n :bold :italic :green "yes" args ... "\n"))
+    ((_ :no args ...)
+     (echo-n :bold :italic :red "no" args ... "\n"))
     ((_ args ...)
      (echo-n args ... "\n"))))
 

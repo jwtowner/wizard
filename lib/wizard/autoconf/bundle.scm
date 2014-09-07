@@ -57,12 +57,12 @@
      (hash-table-ref/default (bundle-definitions (current-bundle)) variable default))))
 
 (define (cache-variable-exists? variable)
-  (hash-table-exists? (bundle-cache (current-bundle)) variable))
+  (hash-table-contains? (bundle-cache (current-bundle)) variable))
 
 (define config-define
   (case-lambda
     ((variable)
-     (define variable 1 ""))
+     (config-define variable 1 ""))
     ((variable value)
      (config-define variable value ""))
     ((variable value description)
@@ -76,7 +76,7 @@
      (hash-table-ref/default (bundle-definitions (current-bundle)) variable default))))
 
 (define (config-define-exists? variable)
-  (hash-table-exists? (bundle-definitions (current-bundle)) variable))
+  (hash-table-contains? (bundle-definitions (current-bundle)) variable))
 
 (define feature
   (case-lambda
@@ -93,7 +93,7 @@
      (hash-table-ref/default (bundle-features (current-bundle)) feature default))))
 
 (define (feature-exists? feature)
-  (hash-table-exists? (bundle-features (current-bundle)) feature))
+  (hash-table-contains? (bundle-features (current-bundle)) feature))
 
 (define package
   (case-lambda
@@ -110,7 +110,7 @@
      (hash-table-ref/default (bundle-packages (current-bundle)) pkg default))))
 
 (define (package-exists? pkg)
-  (hash-table-exists? (bundle-packages (current-bundle)) pkg))
+  (hash-table-contains? (bundle-packages (current-bundle)) pkg))
 
 (define (subst variable value)
   (hash-table-set! (bundle-variables (current-bundle)) variable value))
@@ -123,5 +123,5 @@
      (hash-table-ref/default (bundle-variables (current-bundle)) variable default))))
 
 (define (subst-exists? variable)
-  (hash-table-exists? (bundle-variables (current-bundle)) variable))
+  (hash-table-contains? (bundle-variables (current-bundle)) variable))
 

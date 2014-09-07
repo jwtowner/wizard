@@ -9,6 +9,8 @@
 (ac-msg-notice "Now proceeding with the automated system test ...")
 (ac-msg-checking "libc")
 (ac-msg-result :yes)
+(ac-check-file "config.log")
+(ac-check-file "config.log")
 (ac-msg-checking "non-existent library")
 (ac-msg-result :no)
 (ac-msg-protip :italic "this is a protip")

@@ -9,6 +9,7 @@ Wizard is known to work on the following Scheme implementations:
 
 - Chibi Scheme
 - Chicken Scheme
+- Gauche Scheme
 
 #### Status
 

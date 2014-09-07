@@ -30,35 +30,6 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define (check-file* path)
-  (unless (string? path)
-    (error "check-file -- file path must be a string"))
-  (msg-checking "for file \"" path "\"")
-  (let* ((normpath (path-normalize path))
-         (key (string->symbol (string-append "file:" normpath)))
-         (cache (bundle-cache (current-bundle)))
-         (cached #t)
-         (result (hash-table-ref cache key
-                   (lambda ()
-                     (set! cached #f)
-                     (let ((x (file-exists? normpath)))
-                       (hash-table-set! cache key x)
-                       x)))))
-      (if result
-        (echo-n :bold :green "yes")
-        (echo-n :bold :red "no"))
-      (if cached
-        (echo-n " " :green "(cached)\n")
-        (echo-n "\n"))))
-
-(define-syntax check-file
-  (syntax-rules ()
-    ((_ path)
-     (check-file path #t #f))
-    ((_ path action-if-exists)
-     (check-file path action-if-exist #f))
-    ((_ path action-if-exists action-if-not-found)
-     (if (check-file* path)
-       action-if-exists
-       action-if-not-found))))
+(define (hash-table-empty? ht)
+  (= (hash-table-size ht) 0))
 
