@@ -9,7 +9,7 @@
           msg-checking msg-result msg-protip msg-notice
           msg-warn msg-error msg-failure echo echo-n
           message-port message-log-port original-input-port
-          check-file check-file*)
+          check-file* check-file check-files)
   (import (scheme base)
           (scheme case-lambda)
           (scheme file)

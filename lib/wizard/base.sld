@@ -14,7 +14,9 @@
           display-message-transformer% make-ansi-tty-command
           ansi-tty-command ansi-tty-command? ansi-tty-command->string
  
-          path-normalize)
+          path-separator path-separator? path-absolute? path-relative?
+          path-basename path-dirname path-extension path-split
+          path-split-extension path-join path-join-extension path-normalize)
 
   (import (scheme base)
           (scheme case-lambda)
@@ -52,27 +54,6 @@
     (else
       (begin (define (terminal-port? port) #f))))
 
-  ; file paths 
-
-  (cond-expand
-    (chibi
-      (import
-        (only (chibi pathname)
-          path-normalize)))
-    (chicken
-      (import
-        (rename (files)
-          (normalize-pathname path-normalize))))
-    (gauche
-      (import
-        (only (file util)
-          expand-path
-          simplify-path))
-      (begin
-        (define (path-normalize path)
-          (simplify-path (expand-path path)))))
-    (else
-      (error "implementation not supported")))
-
+  (include "base/path.scm")
   (include "base.scm"))
 

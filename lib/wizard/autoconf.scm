@@ -173,25 +173,21 @@
              packages
              options
              variables))))
-     (when (output-port? (message-log-port)) (close-output-port (message-log-port)))
-     (message-log-port (open-output-file "config.log"))
      (when (hash-table-ref/default (bundle-options (current-bundle)) 'help #f)
        (print-usage-and-exit))
+     (when (output-port? (message-log-port)) (close-output-port (message-log-port)))
+       (message-log-port (open-output-file "config.log"))
      (subst 'PACKAGE_NAME package)
-     (subst 'PACKAGE_VERSION version))))
+     (subst 'PACKAGE_VERSION version)
+     (subst 'PACKAGE_BUGREPORT bug-report)
+     (subst 'PACKAGE_TARNAME tarname)
+     (subst 'PACKAGE_URL url))))
 
 (define (output . files)
-  (exit))
+  (for-each
+    (lambda (file)
+      
+      )
+    files)
+  )
 
-#|;; check-pkg-config works like PKG_PROG_PKG_CONFIG
-(define (check-pkg-config :optional (min-version "0.9.0"))
-  (path-prog 'PKG_CONFIG "pkg-config")
-  (if (have-subst? 'PKG_CONFIG)
-    (let ((proc (run-process `(,(subst-ref 'PKG_CONFIG) "--version") :redirects '((>& 2 1) (> 1 out)))))
-      (let ((version (read-line (process-output proc 'out))))
-        (msg-checking "pkg-config is at least version ~a " min-version)
-        (if (version<=? min-version version)
-          (msg-result "yes")
-          (begin (msg-result "no") (subst 'PKG_CONFIG #f))))
-      (process-wait proc))))
-|#

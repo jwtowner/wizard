@@ -62,3 +62,25 @@
        action-if-exists
        action-if-not-found))))
 
+(define-syntax check-files
+  (syntax-rules ()
+    ((_ path)
+     (check-files paths #t #f))
+    ((_ paths action-if-exists)
+     (check-files paths action-if-exist #f))
+    ((_ paths action-if-exists action-if-not-found)
+     (for-each (lambda (path) (check-file path action-if-exists action-if-not-found)) paths))))
+
+#|;; check-pkg-config works like PKG_PROG_PKG_CONFIG
+(define (check-pkg-config :optional (min-version "0.9.0"))
+  (path-prog 'PKG_CONFIG "pkg-config")
+  (if (have-subst? 'PKG_CONFIG)
+    (let ((proc (run-process `(,(subst-ref 'PKG_CONFIG) "--version") :redirects '((>& 2 1) (> 1 out)))))
+      (let ((version (read-line (process-output proc 'out))))
+        (msg-checking "pkg-config is at least version ~a " min-version)
+        (if (version<=? min-version version)
+          (msg-result "yes")
+          (begin (msg-result "no") (subst 'PKG_CONFIG #f))))
+      (process-wait proc))))
+|#
+
