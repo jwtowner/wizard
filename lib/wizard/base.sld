@@ -24,16 +24,30 @@
           (scheme write)
           (scheme process-context))
 
-  ; hash-table (R7RS-large compatible subset)
+  ; hashtables (R7RS-large compatible subset)
 
   (cond-expand
     (gauche
       (import
         (only (gauche base)
-          make-hash-table hash-table? hash-table-get hash-table-put! hash-table-exists?
-          hash-table-delete! hash-table-copy alist->hash-table hash-table->alist)
-        (prefix (gauche base) gauche:))
+          hash-table? hash-table-delete! hash-table-copy
+          alist->hash-table hash-table->alist)
+        (rename (gauche base)
+          (make-hash-table gauche:make-hash-table)
+          (hash-table-get gauche:hash-table-get)
+          (hash-table-put! gauche:hash-table-put!)
+          (hash-table-exists? gauche:hash-table-exists?)))
       (include "base/hash-table-gauche.scm"))
+    (sagittarius
+      (import
+        (only (rnrs hashtables (6))
+          make-hash-table hash-table? hash-table-contains? hash-table-size
+          hash-table-keys hash-table-set! hash-table-delete! hash-table-copy)
+        (rename (rnrs hashtables (6))
+          (hash-table-ref r6rs:hash-table-ref)
+          (hash-table-update! r6rs:hash-table-update!)
+          (hash-table-entries r6rs:hash-table-entries)))
+      (include "base/hash-table-r6rs.scm"))
     (else
       (import
         (except (srfi 69)

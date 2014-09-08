@@ -134,6 +134,16 @@
            ((name expressions (... ...))
             (transformer-name () () expressions (... ...)))))))))
 
+(define *ansi-tty-command-escape*
+  (cond-expand
+    (chicken (string #\x1B #\[ #\0))
+    (else    "\x1B;[0")))
+
+(define *ansi-tty-command-reset*
+  (cond-expand
+    (chicken (string #\x1B #\[ #\0 #\m))
+    (else    "\x1B;[0m")))
+
 (define-record-type <ansi-tty-command>
   (ansi-tty-command code)
   ansi-tty-command?
@@ -142,7 +152,7 @@
 (define-syntax make-ansi-tty-command
   (syntax-rules ()
     ((_ commands ...)
-     (ansi-tty-command (string-append "\x1B[0" commands ... "m")))))
+     (ansi-tty-command (string-append *ansi-tty-command-escape* commands ... "m")))))
 
 (define (display-message* port-or-token . tokens)
   (let loop ((ports (cond
@@ -161,7 +171,7 @@
                   (write-string (ansi-tty-command->string t) p)
                   (display t p)))
               tokens)
-            (write-string "\x1B[0m" p))
+            (write-string *ansi-tty-command-reset* p))
           (else
             (for-each
               (lambda (t)

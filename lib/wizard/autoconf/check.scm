@@ -35,7 +35,7 @@
     (error "check-file -- file path must be a string"))
   (msg-checking "for file \"" path "\"")
   (let* ((normpath (path-normalize path))
-         (key (string->symbol (string-append "file:" normpath)))
+         (key (string-append "file:" normpath))
          (cache (bundle-cache (current-bundle)))
          (cached #t)
          (result (hash-table-ref cache key

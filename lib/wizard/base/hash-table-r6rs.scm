@@ -30,42 +30,75 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define (make-hash-table)
-  (gauche:make-hash-table 'equal?))
-
-(define (hash-table-contains? hashtable key)
-  (gauche:hash-table-exists? hashtable key))
-
-(define (hash-table-size hashtable)
-  (gauche:hash-table-num-entries hashtable))
+(define *hash-table-error* "hashtable does not contain key")
 
 (define (hash-table-empty? hashtable)
   (zero? (hash-table-size hashtable)))
 
+(define (hash-table-values hashtable)
+  (call-with-values
+    (lambda ()
+      (r6rs:hash-table-entries hashtable))
+    (lambda (keys vals)
+      vals)))
+
 (define hash-table-ref
   (case-lambda
     ((hashtable key)
-     (gauche:hash-table-get hashtable key))
+     (let ((result (r6rs:hash-table-ref hashtable key *hash-table-error*)))
+       (if (eq? result *hash-table-error*)
+         (error result)
+         result)))
     ((hashtable key failure)
-     (if (hash-table-contains? hashtable key)
-       (gauche:hash-table-get hashtable key)
-       (failure)))))
+     (let ((result (r6rs:hash-table-ref hashtable key *hash-table-error*)))
+       (if (eq? result *hash-table-error*)
+         (failure)
+         result)))))
 
 (define (hash-table-ref/default hashtable key default)
-  (gauche:hash-table-get hashtable key default))
-
-(define (hash-table-set! hashtable key value)
-  (gauche:hash-table-put! hashtable key value))
+  (r6rs:hash-table-ref hashtable key default))
 
 (define hash-table-update!
   (case-lambda
     ((hashtable key proc)
-     (gauche:hash-table-update! hashtable key proc))
+     (r6rs:hash-table-update!
+       hashtable
+       key
+       (lambda (arg)
+         (if (eq? result *hash-table-error*)
+           (error result)
+           (proc result)))
+       *hash-table-error*))
     ((hashtable key proc failure)
-     (if (hash-table-contains? hashtable key)
-       (gauche:hash-table-update! hashtable key proc)
-       (failure)))))
+     (r6rs:hash-table-update!
+       hashtable
+       key
+       (lambda (arg)
+         (if (eq? result *hash-table-error*)
+           (failure)
+           (proc result)))
+       *hash-table-error*))))
 
 (define (hash-table-update!/default hashtable key proc default)
-  (gauche:hash-table-update! hashtable key proc default))
+  (r6rs:hash-table-update! hashtable key proc default))
+
+(define (hash-table->alist hashtable)
+  (call-with-values
+    (lambda ()
+      (r6rs:hash-table-entries hashtable))
+    (lambda (keys vals)
+      (let ((alist '()))
+        (vector-for-each
+          (lambda (key val)
+            (set! alist (cons (cons key val) alist)))
+          keys
+          vals)
+        alist))))
+
+(define (alist->hash-table alist)
+  (let ((hashtable (make-hash-table)))
+    (for-each
+      (lambda (entry)
+        (hash-table-set! hashtable (car entry) (cdr entry)))
+      alist)))
 

@@ -30,6 +30,6 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;
 
-(define (hash-table-empty? ht)
-  (= (hash-table-size ht) 0))
+(define (hash-table-empty? hash-table)
+  (zero? (hash-table-size hash-table)))
 

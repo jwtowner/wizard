@@ -184,10 +184,5 @@
      (subst 'PACKAGE_URL url))))
 
 (define (output . files)
-  (for-each
-    (lambda (file)
-      
-      )
-    files)
-  )
+  (exit))
 
