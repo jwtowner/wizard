@@ -1,7 +1,9 @@
 (define-library (wizard base)
   
-  (export version version-compare* version-compare
-          version=? version<? version>? version<=? version>=?
+  (export wizard-version
+         
+          version-compare version-compare* version=? version<?
+          version>? version<=? version>=?
 
           make-hash-table hash-table? hash-table-contains? hash-table-empty?
           hash-table-ref hash-table-ref/default hash-table-set!
@@ -68,6 +70,8 @@
     (else
       (begin (define (terminal-port? port) #f))))
 
+  (include "base/version.scm")
+  (include "base/logging.scm")
   (include "base/path.scm")
   (include "base.scm"))
 

@@ -18,6 +18,7 @@
           (srfi 37)
           (wizard base)
           (rename (wizard base)
+            (wizard-version version)
             (display-message echo-n)))
   (include "autoconf/bundle.scm")
   (include "autoconf/message.scm")
