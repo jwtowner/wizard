@@ -1,5 +1,5 @@
 
-**(This project is abandoned. It was more a less a means to learn Scheme. You're simply better off using `make`, `sh`, `pkg-config` and/or GNU autotools.)**
+**(This project is abandoned. It was more a less a means to learn Scheme. You'll be much better off using `make`, `sh`, `pkg-config` and/or GNU autotools, or perhaps give Meson and Ninja a glance.)**
 
 # Wizard
 #### *Automatic software source package configuration*
