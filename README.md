@@ -1,3 +1,6 @@
+
+**(This project is abandoned. It was more a less a means to learn Scheme. You're simply better off using `make`, `sh`, `pkg-config` and/or GNU autotools.)**
+
 # Wizard
 #### *Automatic software source package configuration*
 
